@@ -1,5 +1,17 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <sys/select.h>
+static void sleep_ms(unsigned int secs)
+{
+    struct timeval tval;
+    tval.tv_sec = secs/1000;
+    tval.tv_usec = (secs*1000)%1000000;
+    select(0, NULL, NULL, NULL, &tval);
+}
 
 // fgets will get the '\n' as the second last character
 // so 'DEBUG OFF' count 11 bytes
@@ -33,6 +45,105 @@ const int BOX_NUM = 2;
 POS_S gsBoxPos[BOX_NUM];
 POS_S gsTgtPos[BOX_NUM];
 
+void generatePos()
+{
+    // player
+    // x >= 1, x < H
+    // y >= 1, y < V
+    srand(time(NULL));
+    gsCurrentPos.x = 1 + rand()%(H-2);
+    gsCurrentPos.y = 1 + rand()%(V-2);
+
+    // target
+    // same as player, but each should be different
+    int usedX[BOX_NUM] = {0};
+    int usedY[BOX_NUM] = {0};
+    memset(usedX, 0, sizeof(usedX));
+    memset(usedY, 0, sizeof(usedY));
+    int j = 0;
+    int k = 0;
+    int randomX = 0;
+    int randomY = 0;
+    int duplicate = 0;
+    for(j=0; j<BOX_NUM; j++)
+    {
+        do
+        {
+            //sleep(1);
+            sleep_ms(500);
+            duplicate = 0; 
+            srand(time(NULL));
+            randomX = 1 + rand()%(H-2);
+            randomY = 1 + rand()%(V-2);
+
+            PRINT("for gen tgt, randomX: %d, randomY: %d.\n",\
+            randomX, randomY);
+            for(k=0; k<BOX_NUM; k++)
+            {
+                if(usedX[k] == randomX && usedY[k] == randomY)
+                {
+                    PRINT("found duplicate, usedX[%d]: %d, usedY[%d]: %d.\n", \
+                    k, usedX[k], k, usedY[k]);
+                    duplicate = 1;
+                }
+            }
+            if(1 != duplicate)
+            {
+                gsTgtPos[j].x = randomX;
+                gsTgtPos[j].y = randomY;
+                usedX[j] = randomX;
+                usedY[j] = randomY;
+            }
+        }while( 1== duplicate);
+    }
+
+    // box
+    int usedBoxX[BOX_NUM] = {0};
+    int usedBoxY[BOX_NUM] = {0};
+    memset(usedBoxX, 0, sizeof(usedBoxX));
+    memset(usedBoxY, 0, sizeof(usedBoxY));
+    for(j=0; j<BOX_NUM; j++)
+    {
+        do
+        {
+            duplicate = 0;
+            srand(time(NULL));
+            randomX = 2 + rand()%(H-4);
+            randomY = 2 + rand()%(V-4);
+            PRINT("for gen box, randomX: %d, randomY: %d.\n",\
+            randomX, randomY);
+
+            for(k=0; k<BOX_NUM; k++)
+            {
+                if(usedBoxX[k] == randomX && usedBoxY[k] == randomY)
+                {
+                    PRINT("found duplicate, usedBoxX[%d]: %d, usedBoxY[%d]: %d.\n", \
+                    k, usedBoxX[k], k, usedBoxY[k]);
+                    duplicate = 1;
+                }
+            }
+
+            if(gsCurrentPos.x == randomX && gsCurrentPos.y == randomY)
+            {
+                PRINT("found duplicate, gsCurrentPos.x: %d, gsCurrentPos.y: %d.\n", \
+                gsCurrentPos.x, gsCurrentPos.y);
+                duplicate = 1;
+            }
+
+            if(1 != duplicate)
+            {
+                gsBoxPos[j].x = randomX;
+                gsBoxPos[j].y = randomY;
+                usedBoxX[j] = randomX;
+                usedBoxY[j] = randomY;
+            }
+
+        }while(1 == duplicate);
+    }
+
+    return;
+}
+
 void gameInit()
 {
     gsCurrentPos.x = 2;
@@ -48,6 +159,8 @@ void gameInit()
     gsTgtPos[1].x = 3;
     gsTgtPos[1].y = 4;
 
+    // generate auto map
+    generatePos();
     return;
 
 }
