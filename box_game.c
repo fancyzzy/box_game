@@ -1,8 +1,20 @@
 #include <stdio.h>
 #include <string.h>
 
-char gCmd[100] = {0};
+// fgets will get the '\n' as the second last character
+// so 'DEBUG OFF' count 11 bytes
+char gCmd[11] = {0};
 
+int Debug = 0;
+
+#define PRINT(fmt...)\
+    do\
+    {\
+        if(1 == Debug)\
+        {\
+            printf("[DEBUG] " fmt);\
+        }\
+    }while(0)
 
 const int H = 6;
 const int V = 6;
@@ -41,14 +53,42 @@ void gameInit()
 }
 void getInput()
 {
-    fgets(gCmd, 2, stdin);
+    PRINT("getInput called.\n");
+    printf("Your input-> ");
+    fgets(gCmd, 11, stdin);
 
-    printf("DEBUG, get cmd: '%s'.\n",gCmd);
+    int k = 0;
+    for(k=0; k<11; k++)
+    {
+        PRINT("original gCmd[%d] = '%c' ", k, gCmd[k]);
+    }
+    // make the last '\n' to '\0'
+    gCmd[strlen(gCmd)-1] = '\0';
+    PRINT("get cmd: '%s', len: %lu.\n",gCmd, strlen(gCmd));
+    printf("\n");
+    if(0 == strcmp("DEBUG ON", gCmd))
+    {
+        Debug = 1;
+    }
+    else if(0 == strcmp("DEBUG OFF", gCmd))
+    {
+        Debug = 0;
+    }
+    else
+    {
+        //do nothing
+    }
     return;
 }
 
 void updateLogic()
 {
+    PRINT("updateLogci called.\n");
+    PRINT("gCmd: '%s'.\n", gCmd);
+    if('\n' == gCmd[0])
+    {
+        return;
+    }
     int pTop = (gsCurrentPos.x-1)*V + gsCurrentPos.y;
     int pBot = (gsCurrentPos.x+1)*V + gsCurrentPos.y;
     int pLeft = gsCurrentPos.x*V + gsCurrentPos.y - 1;
@@ -167,7 +207,7 @@ void updateLogic()
     }
 
 
-    printf("DEBUG, update logic called.\n");
+    PRINT("update logic called.\n");
     return;
 }
 
@@ -177,6 +217,7 @@ void Display()
     int j = 0;
     int total = H*V;
     
+    PRINT("Display called.\n");
     //  calculate  position
     for(i=0; i<total; i++)
     {
@@ -228,8 +269,6 @@ void Display()
         }
     }
 
-   
-    printf("DEBUG, display called.\n");
     return;
 }
 
@@ -262,7 +301,7 @@ int main(void)
                 }
             }
 
-            printf("DEBUG, box[%d](%d,%d), tgt[%d](%d,%d), p(%d,%d), boxOk[%d] = %d, win = %d.\n",\
+            PRINT("DEBUG, box[%d](%d,%d), tgt[%d](%d,%d), p(%d,%d), boxOk[%d] = %d, win = %d.\n",\
                         j, gsBoxPos[j].x, gsBoxPos[j].y, j, gsTgtPos[j].x, gsTgtPos[j].y,\
                         gsCurrentPos.x, gsCurrentPos.y, j, boxOk[j], win);
         }
@@ -272,7 +311,7 @@ int main(void)
             if(1 != boxOk[j])
             {
                 win = 0;
-                printf("boxOk[%d] = %d.\n", j, boxOk[j]);
+                PRINT("boxOk[%d] = %d.\n", j, boxOk[j]);
             }
         }
 
@@ -283,10 +322,9 @@ int main(void)
         }
         else
         {
-            printf("still game..\n");
             for(j=0; j<BOX_NUM; j++)
             {
-                printf("boxOk[%d] = %d.\n", j, boxOk[j]);
+                PRINT("game going on..., boxOk[%d] = %d.\n", j, boxOk[j]);
             }
         }
 
@@ -294,13 +332,13 @@ int main(void)
 
         if(0 == strcmp("q", gCmd))
         {
-            printf("cmd equal to 'q'.\n");
+            PRINT("cmd equal to 'q'.\n");
             printf("GoodBye~\n");
             break;
         }
         else
         {
-            printf("not equal.\n");
+            //do nonthing
         }
         
         updateLogic();
